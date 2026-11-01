@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CLAUDE_MODEL, NO_THINKING } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -186,7 +187,8 @@ ${captionLines.join('\n\n')}
   contentBlocks.push({ type: 'text', text: promptText })
 
   const response = await client.messages.stream({
-    model: 'claude-sonnet-4-6',
+    model: CLAUDE_MODEL,
+    thinking: NO_THINKING,
     max_tokens: 6000,
     system: `あなたは注文住宅会社のウェブサイト専門のプロコピーライターです。建築実例ページの原稿を生成します。
 指定されたマーカー形式（===TITLE===など）でのみ出力し、チェックメモ・説明文・確認コメントは一切出力しません。
@@ -660,7 +662,8 @@ export async function POST(req: NextRequest) {
     contentBlocks.push({ type: 'text', text: userText })
 
     const response = await client.messages.stream({
-      model: 'claude-sonnet-4-6',
+      model: CLAUDE_MODEL,
+      thinking: NO_THINKING,
       max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content: contentBlocks }],

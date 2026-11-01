@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CLAUDE_MODEL, NO_THINKING, firstText } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -165,13 +166,14 @@ ${COMMON_BASE_RULES}${styleBlock}`
 上記の情報をもとに、SUUMO掲載用モデルハウス名・キャッチ・本文キャッチ・本文をJSON形式で出力してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 900,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+  const raw  = firstText(msg) ?? '{}'
   const json = parseModelJson(raw) as Record<string, string>
 
   return NextResponse.json({
@@ -227,13 +229,14 @@ ${COMMON_BASE_RULES}${fewshotBlock}${styleBlock}`
 トーン＆マナーを変えた4つのバリエーションをJSON形式で出力してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 1800,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{"patterns":[]}'
+  const raw  = firstText(msg) ?? '{"patterns":[]}'
   const json = parseModelJson(raw) as { patterns: TitleBody[] }
 
   return NextResponse.json({ patterns: json.patterns ?? [] })
@@ -279,13 +282,14 @@ ${COMMON_BASE_RULES}${styleBlock}`
 リアルな見学者の声として、バリエーション豊かな5つの感想セットをJSON形式で出力してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 1800,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{"reviews":[]}'
+  const raw  = firstText(msg) ?? '{"reviews":[]}'
   const json = parseModelJson(raw) as { reviews: TitleBody[] }
 
   return NextResponse.json({ reviews: json.reviews ?? [] })

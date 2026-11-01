@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CLAUDE_MODEL, NO_THINKING, firstText } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
@@ -164,13 +165,15 @@ ${COMMON_BASE_RULES}${fewshotBlock}${styleBlock}`
 参加特典はバリエーション豊かな4つの異なるパターンで生成してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 2000,
-    system:     systemPrompt,
+    // Few-Shot事例を含むシステムプロンプトは固定内容のためキャッシュ（ヒット時は入力料金が約1/10）
+    system:     [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{}'
+  const raw  = firstText(msg) ?? '{}'
   const json = parseModelJson(raw) as {
     title:          string
     feature:        string
@@ -224,13 +227,14 @@ ${COMMON_BASE_RULES}${styleBlock}`
 本文の内容・文脈に合致した、異なるシーン・スポットを紹介する2セットをJSON形式で出力してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 700,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{"spots":[]}'
+  const raw  = firstText(msg) ?? '{"spots":[]}'
   const json = parseModelJson(raw) as { spots: TitleBody[] }
 
   return NextResponse.json({ spots: json.spots ?? [] })
@@ -279,13 +283,14 @@ ${COMMON_BASE_RULES}${styleBlock}`
 リアルで多様な属性の参加者の声として、5つの感想セットをJSON形式で出力してください。`
 
   const msg = await client.messages.create({
-    model:      'claude-sonnet-4-6',
+    model:      CLAUDE_MODEL,
+    thinking:   NO_THINKING,
     max_tokens: 1800,
     system:     systemPrompt,
     messages:   [{ role: 'user', content: userPrompt }],
   })
 
-  const raw  = msg.content[0].type === 'text' ? msg.content[0].text : '{"reviews":[]}'
+  const raw  = firstText(msg) ?? '{"reviews":[]}'
   const json = parseModelJson(raw) as { reviews: TitleBody[] }
 
   return NextResponse.json({ reviews: json.reviews ?? [] })

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CLAUDE_MODEL, NO_THINKING } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const maxDuration = 60
@@ -62,7 +63,8 @@ export async function POST(req: NextRequest) {
     contentBlocks.push({ type: 'text', text: promptText })
 
     const response = await client.messages.create({
-      model:      'claude-sonnet-4-6',
+      model:      CLAUDE_MODEL,
+      thinking:   NO_THINKING,
       max_tokens: 2000,
       system: `あなたはプロのコピーライターです。ユーザーの指示に従い、指定の文体・表記視点・文字数で原稿を生成します。
 原稿テキストのみを出力し、説明・コメント・文字数確認は一切出力しません。`,
