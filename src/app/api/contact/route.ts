@@ -48,8 +48,12 @@ ${message}
     }
 
     if (!process.env.RESEND_API_KEY) {
-      // 未設定時はログ出力のみ（本番環境では RESEND_API_KEY を設定してください）
+      // 開発環境ではログ出力のみ。本番で未設定なら送信失敗として扱う（届かないのに成功表示にしない）
       console.log('[CONTACT FORM]', mail)
+      if (process.env.NODE_ENV === 'production') {
+        console.error('RESEND_API_KEY is not set')
+        return NextResponse.json({ error: '送信中にエラーが発生しました' }, { status: 500 })
+      }
       return NextResponse.json({ success: true })
     }
 
