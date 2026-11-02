@@ -8,7 +8,6 @@ const PUBLIC_PATHS = [
   '/signup-contact',
   '/terms',
   '/privacy',
-  '/commercial-transaction',
 ]
 
 export async function proxy(request: NextRequest) {

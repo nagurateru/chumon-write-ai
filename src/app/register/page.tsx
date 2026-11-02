@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [homepageUrl,     setHomepageUrl]     = useState('')
   const [password,        setPassword]        = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [agreed,          setAgreed]          = useState(false)
   const [loading,         setLoading]         = useState(false)
   const [error,           setError]           = useState('')
   const [success,         setSuccess]         = useState(false)
@@ -37,6 +38,10 @@ export default function RegisterPage() {
     }
     if (password.length < 8) {
       setError('パスワードは8文字以上で設定してください')
+      return
+    }
+    if (!agreed) {
+      setError('利用規約とプライバシーポリシーへの同意が必要です')
       return
     }
 
@@ -227,6 +232,22 @@ export default function RegisterPage() {
                 autoComplete="new-password"
               />
             </div>
+
+            <label className="flex items-start gap-2 text-sm text-gray-600 leading-relaxed">
+              <input
+                type="checkbox"
+                className="mt-1 accent-suumo-green"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                required
+              />
+              <span>
+                <Link href="/terms" target="_blank" className="text-suumo-green underline hover:opacity-80">利用規約</Link>
+                と
+                <Link href="/privacy" target="_blank" className="text-suumo-green underline hover:opacity-80">プライバシーポリシー</Link>
+                に同意します
+              </span>
+            </label>
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">

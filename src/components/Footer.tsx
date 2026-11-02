@@ -15,9 +15,6 @@ export default function Footer() {
           <Link href="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
             プライバシーポリシー
           </Link>
-          <Link href="/commercial-transaction" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-            特定商取引法に基づく表記
-          </Link>
         </nav>
       </div>
     </footer>
