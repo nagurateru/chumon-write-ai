@@ -12,6 +12,9 @@ const MASTER_KEY_DOMAINS = new Set([
   'no-hp.example.com',
 ])
 
+// ポータルサイトのURLでは登録させない（自社ホームページのみ）
+const PORTAL_DOMAINS = ['suumo.jp', 'homes.co.jp', 'athome.co.jp', 'chintai.net', 'ielove.co.jp']
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -33,6 +36,10 @@ export async function GET(req: NextRequest) {
 
   if (!domain) {
     return NextResponse.json({ available: false, error: '有効なURLを入力してください（例: https://www.example.co.jp）' })
+  }
+
+  if (PORTAL_DOMAINS.some(d => domain === d || domain.endsWith(`.${d}`))) {
+    return NextResponse.json({ available: false, error: 'ポータルサイトのURLは登録できません。自社のホームページURLを入力してください。' })
   }
 
   // マスターキードメインは重複チェックをスキップ

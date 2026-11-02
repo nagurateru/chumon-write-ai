@@ -78,37 +78,25 @@ export default function RegisterPage() {
       email,
       password,
       options: {
-        data: { company_name: companyName },
+        // company_profiles は DB トリガー（migration 011）がこのメタデータから自動作成する
+        data: { company_name: companyName, homepage_url: homepageUrl.trim(), homepage_domain: domain },
       },
     })
 
     if (signUpError) {
-      setError('登録に失敗しました。別のメールアドレスをお試しください。')
+      // トリガーでのプロフィール作成失敗（主にドメイン重複）は "Database error saving new user" として返る
+      setError(signUpError.message.includes('Database error')
+        ? 'このホームページURLは既に登録されている可能性があります。既存のアカウントでログインするか、管理者にお問い合わせください。'
+        : '登録に失敗しました。別のメールアドレスをお試しください。')
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from('company_profiles').insert({
-        user_id:         data.user.id,
-        company_name:    companyName,
-        homepage_url:    homepageUrl.trim(),
-        homepage_domain: domain,
-        strengths:       '',
-        homepage_text:   '',
-        features:        '',
-        custom_prompt:   '',
-      })
-
-      if (profileError) {
-        if (profileError.code === '23505') {
-          setError('このホームページURLは既に登録されています。既存のアカウントでログインするか、管理者にお問い合わせください。')
-        } else {
-          setError('プロフィールの作成に失敗しました。管理者にお問い合わせください。')
-        }
-        setLoading(false)
-        return
-      }
+    // メール認証が有効な場合、登録済みのメールアドレスでもエラーにならず identities が空で返る
+    if (data.user && data.user.identities?.length === 0) {
+      setError('このメールアドレスは既に登録されています。ログイン画面からログインしてください。')
+      setLoading(false)
+      return
     }
 
     setSuccess(true)
