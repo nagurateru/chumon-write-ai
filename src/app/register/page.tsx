@@ -111,20 +111,34 @@ export default function RegisterPage() {
 
     setSuccess(true)
     setLoading(false)
-    setTimeout(() => router.push('/login'), 3000)
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-suumo-green-light to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-suumo-green-light to-white px-4">
         <div className="card text-center max-w-md w-full shadow-lg">
-          <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">登録が完了しました！</h2>
-          <p className="text-gray-600 text-sm">
-            確認メールをお送りしました。<br />
-            メールの認証後、ログインしてください。<br />
-            <span className="text-gray-400">（3秒後にログイン画面へ移動します）</span>
+          <div className="text-5xl mb-4">📩</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-3">メールアドレスの認証をしてください</h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            ご登録いただいたメールアドレス<br />
+            <span className="font-semibold text-gray-900 break-all">{email}</span><br />
+            宛に認証メールをお送りしました。
           </p>
+          <div className="mt-5 text-left text-sm text-gray-600 bg-gray-50 rounded-lg p-4 space-y-1.5">
+            <p>1. 「Confirm your email address」という件名のメールを開いてください</p>
+            <p>2. 本文の「Confirm email address」をクリックしてください</p>
+            <p>3. 認証が完了したら、下のボタンからログインしてください</p>
+          </div>
+          <p className="mt-3 text-xs text-gray-400">
+            メールが届かない場合は、迷惑メールフォルダもご確認ください。
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/login')}
+            className="btn-primary w-full py-3 text-base mt-6"
+          >
+            認証が完了しました（ログイン画面へ）
+          </button>
         </div>
       </div>
     )
