@@ -84,10 +84,20 @@ export default function RegisterPage() {
     })
 
     if (signUpError) {
+      const msg = signUpError.message
+      console.error('signUp error:', signUpError)
       // トリガーでのプロフィール作成失敗（主にドメイン重複）は "Database error saving new user" として返る
-      setError(signUpError.message.includes('Database error')
-        ? 'このホームページURLは既に登録されている可能性があります。既存のアカウントでログインするか、管理者にお問い合わせください。'
-        : '登録に失敗しました。別のメールアドレスをお試しください。')
+      setError(
+        msg.includes('Database error')
+          ? 'このホームページURLは既に登録されている可能性があります。既存のアカウントでログインするか、管理者にお問い合わせください。'
+        : /rate limit/i.test(msg) || signUpError.status === 429
+          ? '短時間に登録操作が集中したため、確認メールを送信できませんでした。1時間ほど時間をおいてからお試しください。'
+        : /password/i.test(msg)
+          ? 'パスワードの条件を満たしていません。より長く複雑なパスワードを設定してください。'
+        : /already registered/i.test(msg)
+          ? 'このメールアドレスは既に登録されています。ログイン画面からログインしてください。'
+          : `登録に失敗しました（${msg}）。時間をおいて再度お試しいただくか、管理者にお問い合わせください。`
+      )
       setLoading(false)
       return
     }
