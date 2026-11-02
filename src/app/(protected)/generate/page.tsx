@@ -1,10 +1,9 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PAGE_TABS, type PageTabKey } from '@/lib/types'
-import { PLANS } from '@/lib/plans'
+import { MONTHLY_LIMIT, countMonthlyUsage } from '@/lib/usage'
 import MhReportTab from '@/components/MhReportTab'
 import EventCampaignTab from '@/components/EventCampaignTab'
 import FreeCreationTab from '@/components/FreeCreationTab'
@@ -145,12 +144,8 @@ function parseCompanyResult(raw: string): { catchCopy: string; mainText: string 
 // ── コンポーネント ────────────────────────────────────────────────────────
 export default function GeneratePage() {
   const supabase  = createClient()
-  const router    = useRouter()
   const [profile, setProfile]           = useState<Record<string, string> | null>(null)
   const [monthlyCount, setMonthlyCount] = useState(0)
-  const [planType,  setPlanType]        = useState<string>('free')
-  const [totalCount, setTotalCount]     = useState(0)
-  const [subActive, setSubActive]       = useState(false)
   const [selectedTab, setSelectedTab]   = useState<PageTabKey>('company')
 
   // ── 単一画像タブ用 (modelhouse / event / store) ──────────────────────
@@ -205,26 +200,17 @@ export default function GeneratePage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-      const [profileRes, countRes, totalRes, subRes] = await Promise.all([
+      const [profileRes, usedCount] = await Promise.all([
         supabase.from('company_profiles').select('*').eq('user_id', user.id).single(),
-        supabase.from('generated_manuscripts').select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id).gte('created_at', startOfMonth),
-        supabase.from('generated_manuscripts').select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id),
-        supabase.from('user_subscriptions').select('plan_type, subscription_status')
-          .eq('user_id', user.id).single(),
+        countMonthlyUsage(supabase, user.id),
       ])
       if (profileRes.data) setProfile(profileRes.data)
-      setMonthlyCount(countRes.count || 0)
-      setTotalCount(totalRes.count || 0)
-      if (subRes.data) {
-        setPlanType(subRes.data.plan_type || 'free')
-        setSubActive(subRes.data.subscription_status === 'active')
-      }
+      setMonthlyCount(usedCount)
     }
     load()
   }, [])
+
+  const incrementCount = () => setMonthlyCount(prev => prev + 1)
 
   // ── タブ切替 ──────────────────────────────────────────────────────────
   const handleTabChange = (tab: PageTabKey) => {
@@ -315,18 +301,9 @@ export default function GeneratePage() {
   }
 
   const handleGenerate = async () => {
-    const isFreePlan = planType === 'free' || !subActive
-    if (isFreePlan) {
-      if (totalCount >= PLANS.free.limit) {
-        router.push('/pricing')
-        return
-      }
-    } else {
-      const planObj = PLANS[planType as keyof typeof PLANS]
-      if (planObj && monthlyCount >= planObj.limit) {
-        router.push('/pricing')
-        return
-      }
+    if (monthlyCount >= MONTHLY_LIMIT) {
+      setError(`今月の生成回数の上限（${MONTHLY_LIMIT}回）に達しました。翌月1日にリセットされます。`)
+      return
     }
 
     if (isConstruction && !photoFiles[0] && !additionalInfo.trim()) {
@@ -381,7 +358,6 @@ export default function GeneratePage() {
       }
 
       setMonthlyCount(prev => prev + 1)
-      setTotalCount(prev => prev + 1)
       if (user) {
         await supabase.from('generated_manuscripts').insert({
           user_id: user.id,
@@ -556,16 +532,10 @@ export default function GeneratePage() {
         </div>
         <div className="flex-shrink-0 text-center bg-suumo-green-light border border-green-200 rounded-xl px-4 py-2">
           <p className="text-2xl font-bold text-suumo-green">
-            {(planType === 'free' || !subActive) ? totalCount : monthlyCount}
-            <span className="text-sm font-normal text-gray-400 ml-1">
-              / {(planType === 'free' || !subActive)
-                ? PLANS.free.limit
-                : (PLANS[planType as keyof typeof PLANS]?.limit ?? 30)}回
-            </span>
+            {monthlyCount}
+            <span className="text-sm font-normal text-gray-400 ml-1">/ {MONTHLY_LIMIT}回</span>
           </p>
-          <p className="text-xs text-gray-500">
-            {(planType === 'free' || !subActive) ? '累計の生成回数' : '今月の生成回数'}
-          </p>
+          <p className="text-xs text-gray-500">今月の生成回数</p>
         </div>
       </div>
 
@@ -931,17 +901,17 @@ export default function GeneratePage() {
       {/* ═══════════════════════════════════════════════════════════════════
           モデルハウスタブ（専用レイアウト: MHレポート）
           ═══════════════════════════════════════════════════════════════════ */}
-      {isModelhouse && <MhReportTab />}
+      {isModelhouse && <MhReportTab onGenerated={incrementCount} />}
 
       {/* ═══════════════════════════════════════════════════════════════════
           イベントタブ（専用レイアウト: EventCampaignTab）
           ═══════════════════════════════════════════════════════════════════ */}
-      {isEvent && <EventCampaignTab />}
+      {isEvent && <EventCampaignTab onGenerated={incrementCount} />}
 
       {/* ═══════════════════════════════════════════════════════════════════
           フリー作成タブ
           ═══════════════════════════════════════════════════════════════════ */}
-      {isFree && <FreeCreationTab />}
+      {isFree && <FreeCreationTab onGenerated={incrementCount} />}
 
       {/* ═══════════════════════════════════════════════════════════════════
           その他タブ（会社概要・強み）

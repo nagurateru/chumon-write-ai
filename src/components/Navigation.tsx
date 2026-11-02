@@ -10,7 +10,6 @@ const navItems = [
   { href: '/dashboard',       label: 'ホーム',        icon: NAV_ICONS.dashboard      },
   { href: '/company-profile', label: '会社の強み設定', icon: NAV_ICONS.companyProfile },
   { href: '/generate',        label: '原稿生成',       icon: NAV_ICONS.generate       },
-  { href: '/pricing',         label: 'プラン・料金',   icon: NAV_ICONS.pricing        },
 ]
 
 export default function Navigation() {

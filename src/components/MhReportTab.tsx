@@ -143,7 +143,7 @@ function EditCard({ label, value, onChange, limit, copyKey, rows, copied, onCopy
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
-export default function MhReportTab() {
+export default function MhReportTab({ onGenerated }: { onGenerated?: () => void }) {
   const supabase = createClient()
 
   // ── ① フリーテキスト ──────────────────────────────────────────────────
@@ -244,6 +244,7 @@ export default function MhReportTab() {
       setMhCatch(data.catch         ?? '')
       setMhBodyCatch(data.bodyCatch ?? '')
       setMhBody(data.body           ?? '')
+      onGenerated?.()
     } catch (e: unknown) {
       setErrBasic(e instanceof Error ? e.message : '生成に失敗しました')
     } finally {

@@ -8,7 +8,6 @@ import {
   PenLine,
   LayoutDashboard,
   FileEdit,
-  CreditCard,
   LogOut,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
@@ -27,6 +26,5 @@ export const NAV_ICONS = {
   dashboard:       (p: LucideProps) => <LayoutDashboard {...p} />,
   companyProfile:  (p: LucideProps) => <Building2       {...p} />,
   generate:        (p: LucideProps) => <FileEdit        {...p} />,
-  pricing:         (p: LucideProps) => <CreditCard      {...p} />,
   logout:          (p: LucideProps) => <LogOut          {...p} />,
 }

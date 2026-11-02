@@ -159,7 +159,7 @@ function EditCard({ label, value, onChange, limit, copyKey, rows, copied, onCopy
 
 // ─── Main Component ────────────────────────────────────────────────────────
 
-export default function EventCampaignTab() {
+export default function EventCampaignTab({ onGenerated }: { onGenerated?: () => void }) {
   const supabase = createClient()
 
   // ── ① カテゴリ & フリーテキスト & 画像 ─────────────────────────────────
@@ -261,6 +261,7 @@ export default function EventCampaignTab() {
         ...pats,
         ...Array.from({ length: Math.max(0, 4 - pats.length) }, () => ({ title: '', body: '' })),
       ].slice(0, 4))
+      onGenerated?.()
     } catch (e: unknown) {
       setErrBasic(e instanceof Error ? e.message : '生成に失敗しました')
     } finally {

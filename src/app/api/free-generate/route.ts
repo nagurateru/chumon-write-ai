@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { CLAUDE_MODEL, NO_THINKING } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requireQuota, recordIfOk } from '@/lib/usage-server'
 
 export const maxDuration = 60
 
@@ -11,6 +12,9 @@ const client = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireQuota()
+    if (auth instanceof NextResponse) return auth
+
     const formData = await req.formData()
 
     const instruction    = (formData.get('instruction')    as string) || ''
@@ -72,7 +76,7 @@ export async function POST(req: NextRequest) {
     })
 
     const text = response.content.find(b => b.type === 'text')
-    return NextResponse.json({ manuscript: text?.type === 'text' ? text.text.trim() : '' })
+    return await recordIfOk(NextResponse.json({ manuscript: text?.type === 'text' ? text.text.trim() : '' }), auth, 'free')
   } catch (err) {
     console.error('free-generate error:', err)
     return NextResponse.json({ error: '生成中にエラーが発生しました' }, { status: 500 })

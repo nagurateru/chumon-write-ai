@@ -14,7 +14,7 @@ const PUBLIC_PATHS = [
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // /api/ は認証チェック・リダイレクト一切なし（Stripe Webhook を含む）
+  // /api/ はリダイレクトしない（認証は各 API ルート内でチェック）
   if (pathname.startsWith('/api/')) {
     return NextResponse.next({ request })
   }
@@ -79,7 +79,6 @@ export const config = {
   matcher: [
     /*
      * /api/ と Next.js の静的アセットを除外したすべてのパスにマッチ。
-     * /api/ を除外することで /api/stripe/webhook は完全にスキップされる。
      */
     '/((?!api/|_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

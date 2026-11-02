@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-export default function FreeCreationTab() {
+export default function FreeCreationTab({ onGenerated }: { onGenerated?: () => void }) {
   const supabase = createClient()
 
   const [instruction,  setInstruction]  = useState('')
@@ -70,6 +70,7 @@ export default function FreeCreationTab() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || '生成に失敗しました')
       setResult(data.manuscript || '')
+      onGenerated?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {

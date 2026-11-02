@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { CLAUDE_MODEL, NO_THINKING } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requireQuota, recordIfOk } from '@/lib/usage-server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -623,6 +624,9 @@ ${COMMON_BASE_RULES}${styleBlock}`,
 // ── メインPOSTハンドラ ─────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireQuota()
+    if (auth instanceof NextResponse) return auth
+
     const formData = await req.formData()
     const tab = formData.get('tab') as string
 
@@ -630,7 +634,7 @@ export async function POST(req: NextRequest) {
 
     // 建築実例タブは専用ハンドラへ
     if (tab === 'construction') {
-      return await handleConstruction(formData, styleSamples)
+      return await recordIfOk(await handleConstruction(formData, styleSamples), auth, tab)
     }
 
     // ── その他タブの共通処理 ──────────────────────────────────────────
@@ -674,7 +678,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '原稿の生成に失敗しました' }, { status: 500 })
     }
 
-    return NextResponse.json({ manuscript: textBlock.text.trim() })
+    return await recordIfOk(NextResponse.json({ manuscript: textBlock.text.trim() }), auth, tab)
   } catch (error) {
     console.error('Generate API error:', error)
     if (error instanceof Anthropic.AuthenticationError) {

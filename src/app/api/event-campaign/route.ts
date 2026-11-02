@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { CLAUDE_MODEL, NO_THINKING, firstText } from '@/lib/claude'
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser, requireQuota, recordIfOk } from '@/lib/usage-server'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
@@ -100,12 +101,16 @@ export async function POST(req: NextRequest) {
       companyContext?: string
     }
 
+    // 回数としてカウントするのは基本原稿のみ（見どころ・感想の追加生成はログインのみ必須）
+    const auth = type === 'basic' ? await requireQuota() : await requireUser()
+    if (auth instanceof NextResponse) return auth
+
     const styleSamples = loadFile('style_samples.txt')
     const styleBlock   = styleSamples ? `\n\n【文体参考】\n---\n${styleSamples}\n---` : ''
     const companyBlock = companyContext ? `\n\n【会社情報】\n${companyContext}` : ''
 
     if (type === 'basic') {
-      return await generateBasic({ eventCategory, freeText: freeText ?? '', companyBlock, styleBlock })
+      return await recordIfOk(await generateBasic({ eventCategory, freeText: freeText ?? '', companyBlock, styleBlock }), auth, 'event')
     }
     if (type === 'spots') {
       return await generateSpots({ eventCategory, eventBody: eventBody ?? '', companyBlock, styleBlock })
